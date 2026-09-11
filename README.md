@@ -32,13 +32,13 @@ The pipeline targets seven proteins:
 
 The pipeline has two main parts:
 
-- **Part A — Representation learning and multitask prediction.** Experimental
+- **Part A: Representation learning and multitask prediction.** Experimental
   IC50 measurements are curated (pIC50 conversion, duplicate removal, median
   assignment), molecular structures are embedded into 2,304-dimensional KPGT
   representations, and a shared transformer encoder with task-specific adapters
   jointly predicts bioactivity across all seven targets. Training uses dynamic
   loss weighting and gradient surgery to mitigate negative transfer.
-- **Part B — Scaffold-level screening and ranking.** A natural product library
+- **Part B: Scaffold-level screening and ranking.** A natural product library
   is grouped into Bemis–Murcko scaffold bags; instance-level predictions are
   aggregated by attention-based MIL, top-k, mean, and max pooling into
   consensus scores; top scaffold bags are refined with a gradient boosting
