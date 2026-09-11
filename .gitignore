@@ -1,0 +1,34 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Environments / virtualenv
+.env
+.venv
+venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Large model/data artifacts (excluded from this repository by design)
+*.pkl
+*.pth
+*.dat
+*.npz
+*.pt
+*.h5
+
+# Training logs
+wandb/
+logs/
+runs/
+tensorboard/
