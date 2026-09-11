@@ -1,11 +1,8 @@
 """Multitask bioactivity prediction module for KnowGraph-MTD.
 
-Implements the multitask transformer described in the manuscript
-"Knowledge-Guided Graph Transformer and Hierarchical Multiple Instance Learning
-for Multi-Target Discovery of Natural Bioactive Compounds Against Autoimmune
-Disease-Associated Proteins":
+Implements a multitask transformer over KPGT molecular embeddings:
 
-  - shared transformer encoder over KPGT molecular embeddings,
+  - shared transformer encoder,
   - task-specific residual-bottleneck adapter layers,
   - task-specific output heads,
   - dynamic weight averaging (DWA) for per-task loss reweighting,

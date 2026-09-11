@@ -1,12 +1,20 @@
 # KnowGraph-MTD
 
-**Knowledge-Guided Graph Transformer and Hierarchical Multiple Instance Learning for Multi-Target Discovery of Natural Bioactive Compounds Against Autoimmune Disease-Associated Proteins**
-
-This repository contains the code and data supporting the study **"Knowledge-Guided Graph Transformer and Hierarchical Multiple Instance Learning for Multi-Target Discovery of Natural Bioactive Compounds Against Autoimmune Disease-Associated Proteins"** (manuscript under review).
+A codebase for knowledge-guided graph representation learning, multitask
+bioactivity prediction, and hierarchical multiple-instance screening of natural
+product libraries against a panel of autoimmune-relevant protein targets.
 
 ## Overview
 
-Autoimmune diseases are driven by the simultaneous dysregulation of multiple immune-inflammatory signaling nodes, yet conventional therapies largely target single effectors. This study presents an integrated, interpretable deep learning pipeline for the systematic discovery of **multi-target natural products** against **seven autoimmune-relevant protein targets**:
+This repository implements an end-to-end pipeline for multi-target natural
+product discovery: curated bioactivity data are converted to pIC50 labels,
+embedded with a knowledge-guided graph transformer (KPGT), fed into a
+multitask transformer with task-specific adapters, and the resulting
+compound-level predictions are aggregated at the scaffold level through
+hierarchical multiple instance learning (MIL), refined by gradient boosting,
+and ranked by hypervolume-based Pareto frontier analysis.
+
+The pipeline targets seven proteins:
 
 | Target | Full name | Role |
 |---|---|---|
@@ -18,41 +26,23 @@ Autoimmune diseases are driven by the simultaneous dysregulation of multiple imm
 | SRC | Proto-oncogene tyrosine-protein kinase Src | Immune cell signaling |
 | ATRIP | ATR-interacting protein | DNA-damage / immune signaling |
 
-The pipeline integrates:
-
-1. **Curated multi-target bioactivity data** — 18,357 unique compounds with experimentally measured IC50 values (converted to pIC50) for the seven targets, curated from ChEMBL, PubChem, ChemSpider, ZINC, BindingDB, PDBbind, and STITCH.
-2. **KPGT molecular embeddings** — 2,304-dimensional knowledge-guided graph transformer (KPGT) representations of molecular structures.
-3. **Multitask transformer bioactivity model** — shared transformer encoder with task-specific adapter layers and output heads, trained with **dynamic weight averaging (DWA)** and **gradient surgery (GS)** to mitigate negative transfer. Under scaffold-based splitting, the full model achieved **Pearson r = 0.923, RMSE = 0.462, R² = 0.817**, outperforming single-task and ensemble baselines.
-4. **Hierarchical multiple instance learning (MIL) screening** — 44,528 natural products from the HERB database were grouped into 2,695 Bemis–Murcko scaffold bags; instance-level predictions were aggregated by attention-based MIL, top-k, mean, and max pooling into consensus scores, refined by gradient boosting, and ranked by **hypervolume-based Pareto frontier analysis**.
-5. **Mechanistic interpretability** — SHAP attribution on KPGT embedding dimensions and graph attention network (GAT) atom-level scoring identified structural complexity, aromatic-ring enrichment, and hydrogen-bonding capacity as primary drivers of multi-target bioactivity.
-6. **Experimental validation** — hot-water extracts of the three top-prioritized botanicals — *Camptotheca acuminata* Decne, *Catharanthus roseus*, and *Uncaria gambir* — significantly suppressed TNF-α, IL-1β, TLR7, and CSF-1, restored IL-4, and reduced lipid peroxidation in LPS-stimulated RAW 264.7 macrophages.
-
-## Key results
-
-| Metric | Value |
-|---|---|
-| Multitask model (scaffold split) | Pearson r = 0.923 · RMSE = 0.462 · R² = 0.817 |
-| Best binary classification (TLR7) | ROC-AUC = 0.951 · PR-AUC = 0.989 |
-| HERB library screened | 44,528 natural products → 2,695 scaffold bags |
-| Advanced scaffold bags (Pareto-ranked) | 135 |
-| Non-dominated scaffold families | 5 (camptothecin class, vinca alkaloids, and others) |
-| Consensus ranking stability | Kendall's τ = 0.72 (IQR 0.65–0.79) |
-| Validated botanicals | *Camptotheca acuminata*, *Catharanthus roseus*, *Uncaria gambir* |
-
 ## Pipeline
 
-```mermaid
-flowchart LR
-    A[Bioactivity data<br/>18,357 compounds, 7 targets] --> B[KPGT embeddings<br/>2,304-d]
-    B --> C[Multitask transformer<br/>DWA + gradient surgery + adapters]
-    C --> D[Instance-level pIC50 predictions<br/>HERB library]
-    D --> E[Scaffold-level MIL aggregation<br/>attention / top-k / mean / max]
-    E --> F[Gradient boosting refinement]
-    F --> G[Hypervolume-based Pareto ranking]
-    G --> H[Top candidates + herb-of-origin mapping]
-    H --> I[SHAP + GAT interpretability]
-    H --> J[Experimental validation<br/>RAW 264.7 macrophages]
-```
+![KnowGraph-MTD pipeline](assets/pipeline.png)
+
+The pipeline has two main parts:
+
+- **Part A — Representation learning and multitask prediction.** Experimental
+  IC50 measurements are curated (pIC50 conversion, duplicate removal, median
+  assignment), molecular structures are embedded into 2,304-dimensional KPGT
+  representations, and a shared transformer encoder with task-specific adapters
+  jointly predicts bioactivity across all seven targets. Training uses dynamic
+  loss weighting and gradient surgery to mitigate negative transfer.
+- **Part B — Scaffold-level screening and ranking.** A natural product library
+  is grouped into Bemis–Murcko scaffold bags; instance-level predictions are
+  aggregated by attention-based MIL, top-k, mean, and max pooling into
+  consensus scores; top scaffold bags are refined with a gradient boosting
+  regressor; and candidates are ranked by a hypervolume-based Pareto frontier.
 
 ## Repository structure
 
@@ -60,23 +50,25 @@ flowchart LR
 KnowGraph-MTD/
 ├── README.md                     # This file
 ├── .gitignore
+├── assets/
+│   └── pipeline.png              # Pipeline figure
 ├── data/
 │   ├── README.md                 # Data description and availability
-│   ├── bioactivity/              # Curated pIC50 training data for the 7 targets (*.tsv)
+│   ├── bioactivity/              # Curated bioactivity data for the 7 targets (*.tsv)
 │   ├── targets/                  # Target protein structures and sequences (PDB/FASTA)
 │   ├── libraries/                # Natural product libraries (HERB, CMAUP, TCMNCs, NCs sample)
 │   └── representations/
-│       └── TCMNCs/               # Complete small example of precomputed KPGT features
-├── mtl/                          # Multitask bioactivity model (this study)
+│       └── TCMNCs/               # Small example of precomputed KPGT features
+├── mtl/                          # Multitask bioactivity model
 │   ├── README.md                 # Architecture, training, and ablation documentation
 │   ├── config.py                 # Hyperparameters and ablation flags
 │   ├── model.py                  # Input projection + transformer blocks + adapters + heads
 │   ├── data.py                   # pIC50 conversion, deduplication, splits, datasets
 │   ├── metrics.py                # RMSE / MAE / R² / Pearson r / ROC-AUC / PR-AUC
-│   ├── trainer.py                # DWA, gradient surgery, training loop
+│   ├── trainer.py                # Dynamic loss weighting, gradient surgery, training loop
 │   ├── prepare.py                # CLI: prepare bioactivity tables for feature extraction
 │   └── train.py                  # CLI: train / evaluate / ablation sweep
-└── kpgt/                         # KPGT code used in this study
+└── kpgt/                         # KPGT code
     ├── src/                      # LiGhT graph transformer (model, data, trainers)
     ├── scripts/                  # Pretraining, finetuning, feature extraction,
     │   │                         # MIL screening, IC50-aware scoring
@@ -88,14 +80,26 @@ KnowGraph-MTD/
 
 ## Data
 
-Detailed descriptions, schemas, and row counts are provided in [`data/README.md`](data/README.md).
+Detailed descriptions, schemas, and row counts are provided in
+[`data/README.md`](data/README.md).
 
-- `data/bioactivity/` — complete curated bioactivity datasets for the seven targets (SMILES, target name, IC50 in nM, curation source, and target PDB IDs).
-- `data/targets/` — PDB structures and FASTA sequences of the seven target proteins.
-- `data/libraries/` — the HERB natural product library used for screening, plus external validation libraries (CMAUP, TCMNCs) and a toy sample of the NCs library.
-- `data/representations/TCMNCs/` — a complete, small-scale example of the precomputed features consumed by the screening scripts (KPGT embeddings, RDKit molecular descriptors, and RDKit fingerprints).
+- `data/bioactivity/` — curated bioactivity datasets for the seven targets
+  (SMILES, target name, IC50 in nM, curation source, and target PDB IDs).
+- `data/targets/` — PDB structures and FASTA sequences of the seven target
+  proteins.
+- `data/libraries/` — the HERB natural product library used for screening,
+  plus external validation libraries (CMAUP, TCMNCs) and a toy sample of the
+  NCs library.
+- `data/representations/TCMNCs/` — a small-scale example of the precomputed
+  features consumed by the screening scripts (KPGT embeddings, RDKit molecular
+  descriptors, and RDKit fingerprints).
 
-**Toy-data policy.** This repository intentionally ships only a light-weight subset of the precomputed resources (see `data/README.md`). Large processed files — full-scale KPGT feature matrices (`*.npz`), memmap files (`*.dat`), pickled processed datasets (`*.pkl`), and pretrained/fine-tuned model checkpoints (`*.pth`) — are excluded because of their size (up to several GB). These can be requested from the corresponding author.
+**Toy-data policy.** This repository ships only a light-weight subset of the
+precomputed resources (see `data/README.md`). Large processed files —
+full-scale KPGT feature matrices (`*.npz`), memmap files (`*.dat`), pickled
+processed datasets (`*.pkl`), and pretrained/fine-tuned model checkpoints
+(`*.pth`) — are excluded because of their size (up to several GB). These can
+be requested from the corresponding author.
 
 ## Requirements
 
@@ -106,7 +110,8 @@ Detailed descriptions, schemas, and row counts are provided in [`data/README.md`
 - SHAP 0.47.2
 - umap-learn 0.5.7
 
-For the KPGT environment, create a conda environment from `kpgt/environment.yml` as described in [`kpgt/README.md`](kpgt/README.md):
+For the KPGT environment, create a conda environment from
+`kpgt/environment.yml` as described in [`kpgt/README.md`](kpgt/README.md):
 
 ```bash
 cd kpgt
@@ -118,7 +123,8 @@ conda activate KPGT
 
 ### 1. Generate KPGT molecular embeddings
 
-Use the pretrained KPGT model (download instructions in `kpgt/README.md`) to embed SMILES:
+Use a pretrained KPGT model (download instructions in `kpgt/README.md`) to
+embed SMILES:
 
 ```bash
 cd kpgt/scripts
@@ -128,26 +134,29 @@ python extract_features.py --config base --model_path <pretrained_model_path> \
 
 ### 2. Train and evaluate the multitask bioactivity model
 
-The multitask transformer module (`mtl/`) implements the model described in Methods 2.2: a shared transformer encoder with task-specific adapter layers and output heads, trained with dynamic weight averaging (DWA) and gradient surgery (GS). It consumes the KPGT embeddings produced in step 1.
+The `mtl/` module implements a shared transformer encoder with task-specific
+adapter layers and output heads, trained with dynamic loss weighting and
+gradient surgery. It consumes the KPGT embeddings produced in step 1.
 
 ```bash
 # Prepare bioactivity tables (pIC50 conversion + deduplication)
 python -m mtl.prepare --data-dir data/bioactivity --out-dir data/features/prepared
 
-# Full model, scaffold split (primary evaluation)
+# Full model, scaffold split
 python -m mtl.train --data-dir data/bioactivity --features-dir data/features \
     --split scaffold --ablation full --seed 22
 
-# Five-seed reproducibility run (manuscript protocol)
+# Five-seed run
 python -m mtl.train --ablation full --seeds 22,42,62,82,102
 
-# Ablation sweep (DWA / gradient surgery / adapter removal)
+# Ablation sweep (dynamic weighting / gradient surgery / adapter removal)
 python -m mtl.train --ablation no_dwa --seeds 22,42,62,82,102
 python -m mtl.train --ablation no_gs --seeds 22,42,62,82,102
 python -m mtl.train --ablation no_adapter --seeds 22,42,62,82,102
 ```
 
-See [`mtl/README.md`](mtl/README.md) for the full documentation (architecture, all ablation modes, outputs, and requirements).
+See [`mtl/README.md`](mtl/README.md) for the full documentation (architecture,
+all ablation modes, outputs, and requirements).
 
 Fine-tuning and evaluation of the KPGT/LiGhT backbone itself:
 
@@ -158,7 +167,9 @@ python evaluation.py --config base --model_path <checkpoint> --data_path <datase
 
 ### 3. Scaffold-level MIL screening
 
-`ProjectionHead_MIL.py` implements the two-phase hierarchical MIL screening (scaffold bag construction, multi-pooling consensus scoring, and gradient boosting refinement) over precomputed KPGT features:
+`ProjectionHead_MIL.py` implements the two-phase hierarchical MIL screening
+(scaffold bag construction, multi-pooling consensus scoring, and gradient
+boosting refinement) over precomputed KPGT features:
 
 ```bash
 python ProjectionHead_MIL.py --help
@@ -166,29 +177,32 @@ python ProjectionHead_MIL.py --help
 
 ### 4. IC50-aware external validation scoring
 
-`IC50_aware_MIL_scoring.py` performs IC50-aware contrastive scoring of external natural product libraries (NCs, CMAUP, TCMNCs) against the seven-target panel:
+`IC50_aware_MIL_scoring.py` performs IC50-aware contrastive scoring of
+external natural product libraries (NCs, CMAUP, TCMNCs) against the
+seven-target panel:
 
 ```bash
 python IC50_aware_MIL_scoring.py --help
 ```
 
-Precomputed Top results are available in `kpgt/scripts/mil_results/`.
+Precomputed results are available in `kpgt/scripts/mil_results/`.
 
-## Reproducibility
+## Configuration
 
-- Random seeds: `{22, 42, 62, 82, 102}` (the full pipeline was repeated five times; all coefficients of variation remained below the predefined stability threshold).
-- Data partitioning: random split (80/10/10) and Bemis–Murcko scaffold-based split (primary evaluation).
-- Ranking stability: 1,000 Dirichlet-sampled weight perturbations (Kendall's τ = 0.72, IQR 0.65–0.79).
+- Random seeds: `{22, 42, 62, 82, 102}`.
+- Data partitioning: random split (80/10/10) and Bemis–Murcko scaffold-based
+  split.
+- Ranking stability: 1,000 Dirichlet-sampled weight perturbations.
 
 ## License and data availability
 
-- The KPGT code under `kpgt/` is licensed under the **Apache License 2.0** (see `kpgt/LICENSE`).
-- The curated bioactivity data, natural product libraries, and screening results in `data/` are released for research use with this study; please contact the authors for full-scale data and any reuse beyond research purposes.
-
-## Citation
-
-Citation will be added upon publication.
+- The KPGT code under `kpgt/` is licensed under the **Apache License 2.0**
+  (see `kpgt/LICENSE`).
+- The curated bioactivity data, natural product libraries, and screening
+  results in `data/` are released for research use; please contact the authors
+  for full-scale data and any reuse beyond research purposes.
 
 ## Contact
 
-For questions about the code, data, or the study, please open an issue in this repository or contact the corresponding author.
+For questions about the code or data, please open an issue in this repository
+or contact the corresponding author.

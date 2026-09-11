@@ -1,4 +1,4 @@
-"""Evaluation metrics used in the manuscript (Methods 2.2.3).
+"""Evaluation metrics.
 
 Regression: RMSE, MAE, R^2, Pearson correlation coefficient.
 Classification (active if pIC50 >= 5.0): ROC-AUC, PR-AUC.

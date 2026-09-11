@@ -33,8 +33,8 @@ Seven tab-separated files, one per target, containing the curated bioactivity me
 
 Notes:
 
-- Compound counts are per target (a compound can appear under more than one target); the full multi-target dataset comprises 18,357 unique compounds as described in the manuscript.
-- IC50 values are in nM; the study converts them to pIC50 via `pIC50 = -log10(IC50 x 10^-9)`, deduplicates by canonical SMILES, and consolidates duplicate measurements using the median pIC50.
+- Compound counts are per target (a compound can appear under more than one target); the full multi-target dataset comprises 18,357 unique compounds.
+- IC50 values are in nM; they are converted to pIC50 via `pIC50 = -log10(IC50 x 10^-9)`, deduplicated by canonical SMILES, and duplicate measurements are consolidated using the median pIC50.
 
 ## `targets/`
 

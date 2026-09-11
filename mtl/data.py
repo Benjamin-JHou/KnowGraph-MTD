@@ -1,13 +1,12 @@
 """Data loading and preparation for the multitask bioactivity model.
 
 The curated bioactivity tables (``data/bioactivity/<TARGET>.tsv``) contain raw
-IC50 measurements in nM. Following the manuscript (Methods 2.2.1):
+IC50 measurements in nM. Data preparation:
 
   * IC50 values are converted to pIC50: ``pIC50 = -log10(IC50 x 10^-9)``.
   * Structures are canonicalized with RDKit.
   * Duplicate measurements are consolidated by the median pIC50.
-  * Two splits are supported: random (80/10/10) and Bemis-Murcko scaffold-based
-    (primary evaluation).
+  * Two splits are supported: random (80/10/10) and Bemis-Murcko scaffold-based.
 
 KPGT embeddings are consumed from ``<features_dir>/<TARGET>.npz`` (key ``fps``,
 shape ``(n, 2304)``), aligned row-wise with the deduplicated

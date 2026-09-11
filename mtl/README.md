@@ -1,11 +1,11 @@
 # Multitask Bioactivity Model (mtl)
 
-This module implements the **multitask transformer** described in Methods 2.2 of
-the manuscript. It consumes precomputed **KPGT molecular embeddings**
-(2,304 dimensions) and jointly predicts the pIC50 of compounds against the
-seven autoimmune-relevant targets: ATRIP, CSF1, PDCD1, SRC, STAT3, TLR7, TNF.
+This module implements a **multitask transformer** that consumes precomputed
+**KPGT molecular embeddings** (2,304 dimensions) and jointly predicts the pIC50
+of compounds against the seven autoimmune-relevant targets: ATRIP, CSF1, PDCD1,
+SRC, STAT3, TLR7, TNF.
 
-## Architecture (Methods 2.2.2)
+## Architecture
 
 ```
 KPGT embedding (2,304)
@@ -30,9 +30,9 @@ Input projection (2,304 -> 512)  LayerNorm + GELU + dropout 0.15
 * Shared backbone: input projection + two transformer encoder blocks.
 * Task-specific residual-bottleneck adapters (512 -> 64 -> 512, GELU).
 * Task-specific output heads (512 -> 256 -> 128 -> 1).
-* Total trainable parameters: ~9.8M (exact count is printed at startup).
+* Total trainable parameters: ~8.2M (exact count is printed at startup).
 
-## Training components (Methods 2.2.3)
+## Training components
 
 | Component | Implementation |
 |---|---|
@@ -49,14 +49,14 @@ Input projection (2,304 -> 512)  LayerNorm + GELU + dropout 0.15
 
 The curated bioactivity tables are in `../data/bioactivity/<TARGET>.tsv`
 (columns: `Ligand SMILES`, `Target Name`, `IC50 (nM)`, `Curation/DataSource`,
-`PDB ID(s) of Target Chain`). Following Methods 2.2.1:
+`PDB ID(s) of Target Chain`). Data preparation:
 
 1. Convert IC50 (nM) to pIC50: `pIC50 = -log10(IC50 x 10^-9)`.
 2. Canonicalize SMILES with RDKit.
 3. Consolidate duplicate measurements by the **median pIC50**.
 
 ```bash
-# 1) Prepare deduplicated per-target CSVs (smiles, pIC50)
+# Prepare deduplicated per-target CSVs (smiles, pIC50)
 python -m mtl.prepare --data-dir data/bioactivity --out-dir data/features/prepared
 ```
 
@@ -90,16 +90,16 @@ python -m mtl.train --data-dir data/bioactivity --features-dir data/features \
 # Random split
 python -m mtl.train --split random --ablation full --seed 22
 
-# Five-seed reproducibility run (seeds {22, 42, 62, 82, 102})
+# Five-seed run (seeds {22, 42, 62, 82, 102})
 python -m mtl.train --ablation full --seeds 22,42,62,82,102
 
-# Ablation sweep (Table 2 of the manuscript)
-python -m mtl.train --ablation no_dwa     --seeds 22,42,62,82,102
-python -m mtl.train --ablation no_gs      --seeds 22,42,62,82,102
-python -m mtl.train --ablation no_adapter --seeds 22,42,62,82,102
-python -m mtl.train --ablation dwa_gs     --seeds 22,42,62,82,102
+# Ablation sweep
+python -m mtl.train --ablation no_dwa      --seeds 22,42,62,82,102
+python -m mtl.train --ablation no_gs       --seeds 22,42,62,82,102
+python -m mtl.train --ablation no_adapter  --seeds 22,42,62,82,102
+python -m mtl.train --ablation dwa_gs      --seeds 22,42,62,82,102
 python -m mtl.train --ablation dwa_adapter --seeds 22,42,62,82,102
-python -m mtl.train --ablation gs_adapter --seeds 22,42,62,82,102
+python -m mtl.train --ablation gs_adapter  --seeds 22,42,62,82,102
 
 # Single-task baseline (7 independent models, identical backbone)
 python -m mtl.train --ablation stl --seeds 22,42,62,82,102
@@ -109,7 +109,7 @@ python -m mtl.train --ablation stl --seeds 22,42,62,82,102
 
 | `--ablation` | DWA | GS | Adapters | Notes |
 |---|---|---|---|---|
-| `full` | ✔ | ✔ | ✔ | Adopted configuration |
+| `full` | ✔ | ✔ | ✔ | Full configuration |
 | `no_dwa` | ✘ | ✔ | ✔ | DWA removal |
 | `no_gs` | ✔ | ✘ | ✔ | Gradient surgery removal |
 | `no_adapter` | ✔ | ✔ | ✘ | Adapter removal |
@@ -120,7 +120,7 @@ python -m mtl.train --ablation stl --seeds 22,42,62,82,102
 
 ## Evaluation metrics
 
-Regression (Methods 2.2.3): RMSE, MAE, R², Pearson correlation coefficient.
+Regression: RMSE, MAE, R², Pearson correlation coefficient.
 Classification (compound active if pIC50 >= 5.0): ROC-AUC, PR-AUC.
 
 Outputs are written to `--out-dir`:
@@ -130,12 +130,10 @@ Outputs are written to `--out-dir`:
 * `<split>_<ablation>_seed<s>_history.json` — training curves
 * `<split>_<ablation>_summary.json` — mean / std / CV across seeds
 
-## Reproducibility
+## Configuration
 
-Random seeds: `{22, 42, 62, 82, 102}` (the full pipeline was repeated five
-times; all coefficients of variation remained below the predefined stability
-threshold). Data partitioning: random split (80/10/10) and Bemis–Murcko
-scaffold-based split (primary evaluation).
+Random seeds: `{22, 42, 62, 82, 102}`. Data partitioning: random split
+(80/10/10) and Bemis–Murcko scaffold-based split.
 
 ## Requirements
 

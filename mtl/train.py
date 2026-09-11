@@ -6,7 +6,7 @@ Examples::
     python -m mtl.train --data-dir data/bioactivity --features-dir data/features \
         --split scaffold --ablation full --seed 22
 
-    # Five-seed reproducibility run (manuscript protocol)
+    # Five-seed run (seeds {22, 42, 62, 82, 102})
     python -m mtl.train --ablation full --seeds 22,42,62,82,102
 
     # Ablation sweep

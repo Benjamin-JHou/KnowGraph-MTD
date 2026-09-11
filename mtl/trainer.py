@@ -1,7 +1,5 @@
 """Training machinery: DWA, gradient surgery, and the multitask loop.
 
-Manuscript Methods 2.2.3:
-
 * **Dynamic weight averaging (DWA)** -- per-task loss weights are adjusted from
   the loss descent rates across consecutive epochs:
   ``r_i(t-1) = L_i(t-1) / L_i(t-2)``,
@@ -75,7 +73,7 @@ def gradient_surgery(
     parameters. For each pair (i, j) with a negative cosine similarity, task i's
     gradient is projected to remove its component along task j's gradient.
     Projection order follows ``order``:
-      - "desc":   descending task loss magnitude (adopted in the study)
+      - "desc":   descending task loss magnitude (default)
       - "asc":    ascending task loss magnitude
       - "random": fixed random order (seeded)
     """

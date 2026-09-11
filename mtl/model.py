@@ -1,4 +1,4 @@
-"""Multitask transformer architecture (manuscript Methods 2.2.2).
+"""Multitask transformer architecture.
 
 Four sequential components:
 
@@ -52,7 +52,7 @@ class TransformerBlock(nn.Module):
         )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        # x: (B, L, D); the study feeds a single-token sequence (L=1).
+        # x: (B, L, D); the model feeds a single-token sequence (L=1).
         h = self.norm1(x)
         h, _ = self.attn(h, h, h)
         x = x + h
@@ -154,7 +154,7 @@ class MTLModel(nn.Module):
         return sum(p.numel() for p in self.parameters())
 
     def parameter_groups(self, lr_shared: float, lr_head: float, weight_decay: float):
-        """Two parameter groups for differential learning rates (Methods 2.2.3)."""
+        """Two parameter groups for differential learning rates."""
         shared = list(self.projection.parameters()) + list(self.blocks.parameters())
         if self.adapters is not None:
             shared += list(self.adapters.parameters())

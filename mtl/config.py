@@ -1,6 +1,6 @@
 """Configuration for the multitask bioactivity model.
 
-Hyperparameters follow the manuscript (Methods 2.2):
+Default hyperparameters:
   - input projection: 2,304 -> 512 (LayerNorm + GELU + 15% dropout)
   - two transformer encoder blocks (d=512, FFN=2,048, 8 heads)
   - task adapters: residual bottleneck 512 -> 64 -> 512 (GELU)
