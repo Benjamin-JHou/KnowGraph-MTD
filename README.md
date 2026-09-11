@@ -67,6 +67,15 @@ KnowGraph-MTD/
 │   ├── libraries/                # Natural product libraries (HERB, CMAUP, TCMNCs, NCs sample)
 │   └── representations/
 │       └── TCMNCs/               # Complete small example of precomputed KPGT features
+├── mtl/                          # Multitask bioactivity model (this study)
+│   ├── README.md                 # Architecture, training, and ablation documentation
+│   ├── config.py                 # Hyperparameters and ablation flags
+│   ├── model.py                  # Input projection + transformer blocks + adapters + heads
+│   ├── data.py                   # pIC50 conversion, deduplication, splits, datasets
+│   ├── metrics.py                # RMSE / MAE / R² / Pearson r / ROC-AUC / PR-AUC
+│   ├── trainer.py                # DWA, gradient surgery, training loop
+│   ├── prepare.py                # CLI: prepare bioactivity tables for feature extraction
+│   └── train.py                  # CLI: train / evaluate / ablation sweep
 └── kpgt/                         # KPGT code used in this study
     ├── src/                      # LiGhT graph transformer (model, data, trainers)
     ├── scripts/                  # Pretraining, finetuning, feature extraction,
@@ -117,16 +126,35 @@ python extract_features.py --config base --model_path <pretrained_model_path> \
     --data_path <smiles_csv_dir> --device auto
 ```
 
-### 2. Train and evaluate the bioactivity model
+### 2. Train and evaluate the multitask bioactivity model
 
-Fine-tuning and evaluation scripts for the KPGT/LiGhT backbone:
+The multitask transformer module (`mtl/`) implements the model described in Methods 2.2: a shared transformer encoder with task-specific adapter layers and output heads, trained with dynamic weight averaging (DWA) and gradient surgery (GS). It consumes the KPGT embeddings produced in step 1.
+
+```bash
+# Prepare bioactivity tables (pIC50 conversion + deduplication)
+python -m mtl.prepare --data-dir data/bioactivity --out-dir data/features/prepared
+
+# Full model, scaffold split (primary evaluation)
+python -m mtl.train --data-dir data/bioactivity --features-dir data/features \
+    --split scaffold --ablation full --seed 22
+
+# Five-seed reproducibility run (manuscript protocol)
+python -m mtl.train --ablation full --seeds 22,42,62,82,102
+
+# Ablation sweep (DWA / gradient surgery / adapter removal)
+python -m mtl.train --ablation no_dwa --seeds 22,42,62,82,102
+python -m mtl.train --ablation no_gs --seeds 22,42,62,82,102
+python -m mtl.train --ablation no_adapter --seeds 22,42,62,82,102
+```
+
+See [`mtl/README.md`](mtl/README.md) for the full documentation (architecture, all ablation modes, outputs, and requirements).
+
+Fine-tuning and evaluation of the KPGT/LiGhT backbone itself:
 
 ```bash
 python finetune.py --config base --model_path <pretrained_model_path> --data_path <dataset_dir>
 python evaluation.py --config base --model_path <checkpoint> --data_path <dataset_dir>
 ```
-
-> **Note:** the multitask transformer module (DWA + gradient surgery + task adapters) used to generate the reported multi-target predictions is not included in this release; please contact the authors for access.
 
 ### 3. Scaffold-level MIL screening
 
