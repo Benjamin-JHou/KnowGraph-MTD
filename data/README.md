@@ -1,6 +1,6 @@
 # Data
 
-This directory contains the data used in the study **"Knowledge-Guided Graph Transformer and Hierarchical Multiple Instance Learning for Multi-Target Discovery of Natural Bioactive Compounds Against Autoimmune Disease-Associated Proteins"**.
+This directory contains the data.
 
 All file names are in English; column names follow the original curation. Precomputed feature matrices are stored as NumPy compressed archives (`.npz`).
 
